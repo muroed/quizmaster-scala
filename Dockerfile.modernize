@@ -12,6 +12,7 @@ RUN --mount=type=cache,target=/root/.sbt --mount=type=cache,target=/root/.cache/
 RUN mkdir /distribution && unzip -q /src/app/jvm/target/universal/*.zip -d /distribution
 FROM eclipse-temurin:17-jre
 RUN apt-get update && apt-get install -y --no-install-recommends git openssh-client ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN groupadd --gid 10001 quizmaster && useradd --uid 10001 --gid 10001 --no-create-home --home-dir /tmp quizmaster
 WORKDIR /app
 COPY --from=0 /distribution/server-1.0/ /app/
 COPY --from=0 /src/conf/ /app/conf/
