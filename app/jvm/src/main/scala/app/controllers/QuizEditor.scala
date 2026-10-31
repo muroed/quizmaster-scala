@@ -15,7 +15,7 @@ import scala.util.{Try, Using}
 final class QuizEditor @Inject()(cc: ControllerComponents, parser: QuizConfigParsableValue) extends AbstractController(cc) {
   private val repo = QuizRepository.configured
   private def authorized[A](request: Request[A]): Boolean = {
-    val expected = sys.env.get("QUIZ_EDITOR_PASSWORD").filter(_.length >= 20)
+    val expected = sys.env.get("QUIZ_EDITOR_PASSWORD").filter(_.nonEmpty)
     val presented = request.headers.get("Authorization").filter(_.startsWith("Basic ")).flatMap { h =>
       Try(new String(Base64.getDecoder.decode(h.drop(6)), StandardCharsets.UTF_8)).toOption
     }.flatMap { s => val pos = s.indexOf(':'); if (pos >= 0 && s.take(pos) == "editor") Some(s.drop(pos + 1)) else None }

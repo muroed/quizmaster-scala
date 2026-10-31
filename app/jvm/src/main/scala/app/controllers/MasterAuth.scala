@@ -12,7 +12,7 @@ final class MasterAuth @Inject()(cc: ControllerComponents, config: QuizConfig, s
     val supplied = request.body.getBytes(StandardCharsets.UTF_8)
     val expected = config.masterSecret.getBytes(StandardCharsets.UTF_8)
     if (!request.headers.get("X-Requested-With").contains("Quizmaster")) Forbidden
-    else if (config.masterSecret.length < 12 || !MessageDigest.isEqual(supplied, expected)) Unauthorized
+    else if (config.masterSecret.isEmpty || !MessageDigest.isEqual(supplied, expected)) Unauthorized
     else Ok.withSession(request.session + ("quizmaster" -> MasterSession.loginValue(config, settings))).withHeaders("Cache-Control" -> "no-store")
   }
   def logout = Action { request =>

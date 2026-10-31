@@ -16,7 +16,7 @@ object MasterSession {
     Base64.getUrlEncoder.withoutPadding().encodeToString(mac.doFinal(config.masterSecret.getBytes(StandardCharsets.UTF_8)))
   }
   def valid(request: RequestHeader, config: QuizConfig, settings: Configuration): Boolean = {
-    config.masterSecret.length >= 12 && request.session.get("quizmaster").exists { value =>
+    config.masterSecret.nonEmpty && request.session.get("quizmaster").exists { value =>
       MessageDigest.isEqual(value.getBytes(StandardCharsets.UTF_8), token(config, settings).getBytes(StandardCharsets.UTF_8))
     }
   }

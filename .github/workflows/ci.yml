@@ -32,7 +32,7 @@ jobs:
           git -C /tmp/quiz-ci/quiz remote set-url origin /data/remote.git
       - name: Start application
         run: |
-          docker run -d --name quizmaster-ci -p 127.0.0.1:19091:9000 -v /tmp/quiz-ci:/data -e QUIZ_GIT_DIR=/data/quiz -e QUIZ_CONFIG_PATH=/data/quiz/quiz-config.yml -e QUIZ_EDITOR_ORIGIN=http://127.0.0.1:19091 -e QUIZ_EDITOR_PASSWORD=editor-test-only-password-123 -e APPLICATION_SECRET=ci-only-0123456789abcdef0123456789abcdef0123456789 quizmaster:ci
+          docker run -d --name quizmaster-ci -p 127.0.0.1:19091:9000 -v /tmp/quiz-ci:/data -e QUIZ_GIT_DIR=/data/quiz -e QUIZ_CONFIG_PATH=/data/quiz/quiz-config.yml -e QUIZ_EDITOR_ORIGIN=http://127.0.0.1:19091 -e QUIZ_EDITOR_PASSWORD=editor1 -e QUIZ_MASTER_PASSWORD=1234 -e APPLICATION_SECRET=ci-only-0123456789abcdef0123456789abcdef0123456789 quizmaster:ci
           docker exec quizmaster-ci git config --global --add safe.directory /data/quiz
           docker exec quizmaster-ci git config --global --add safe.directory /data/remote.git
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:19091/externalapi/healthcheck/ && exit 0; sleep 2; done
@@ -44,6 +44,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Test browser startup
         run: node tests/browser-smoke.cjs
+        env:
+          QUIZ_TEST_MASTER_PASSWORD: "1234"
       - name: Test editor and private Git storage
         run: node tests/editor-git.cjs
         env:

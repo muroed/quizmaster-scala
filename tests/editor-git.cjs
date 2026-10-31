@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 const base = process.env.QUIZ_URL || 'http://127.0.0.1:19091';
-const auth = 'Basic ' + Buffer.from('editor:editor-test-only-password-123').toString('base64');
+const auth = 'Basic ' + Buffer.from('editor:editor1').toString('base64');
 const writeHeaders = {'Authorization': auth, 'X-Requested-With': 'QuizmasterEditor', 'Origin': base};
 (async () => {
   assert.equal((await fetch(base + '/editor/api/quizzes')).status, 401);

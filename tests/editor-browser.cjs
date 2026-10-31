@@ -1,7 +1,7 @@
 const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch({headless:true});
-  const context = await browser.newContext({httpCredentials:{username:'editor',password:'editor-test-only-password-123'}});
+  const context = await browser.newContext({httpCredentials:{username:'editor',password:'editor1'}});
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
