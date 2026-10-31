@@ -54,7 +54,7 @@ private[router] final class RouterFactory(implicit
         (emptyRule
 
           | staticRoute(RouterFactory.pathPrefix, StandardPages.Root)
-          ~> redirectToPage(AppPages.TeamSelection)(Redirect.Replace)
+          ~> redirectToPage(AppPages.TeamSelection)(SetRouteVia.HistoryReplace)
 
           | staticRuleFromPage(AppPages.TeamSelection, reactAppModule.teamController.forTeamSelection)
 
@@ -73,21 +73,21 @@ private[router] final class RouterFactory(implicit
           | staticRuleFromPage(AppPages.Gamepad, reactAppModule.gamepadSetupView.apply)
 
         // Fallback
-        ).notFound(redirectToPage(StandardPages.Root)(Redirect.Replace))
+        ).notFound(redirectToPage(StandardPages.Root)(SetRouteVia.HistoryReplace))
           .onPostRender((_, currentPage) =>
             LogExceptionsCallback(
               dispatcher
                 .dispatch(StandardActions.SetPageLoadingState(isLoading = false, currentPage = currentPage))
-            )
+            ).map(_ => ())
           )
           .onPostRender((_, page) =>
             LogExceptionsCallback(async {
               val title = await(page.title)
               dom.document.title = s"$title | Quizmaster"
-            })
+            }).map(_ => ())
           )
       }
-      .renderWith(layout)
+      .renderWith((ctl, resolution) => layout(ctl, resolution)(reactAppModule))
   }
 
   private def layout(routerCtl: RouterCtl[Page], resolution: Resolution[Page])(implicit

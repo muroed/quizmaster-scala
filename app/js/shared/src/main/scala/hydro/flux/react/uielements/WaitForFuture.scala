@@ -21,9 +21,10 @@ final class WaitForFuture[V] {
         case None        => props.waitingElement
       }
     )
-    .componentWillMount($ =>
+    .componentDidMount($ =>
       LogExceptionsCallback {
         $.props.futureInput.map(input => $.modState(_.copy(input = Some(input))).runNow())
+        ()
       }
     )
     .build

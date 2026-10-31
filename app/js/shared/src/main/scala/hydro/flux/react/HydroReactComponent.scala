@@ -6,7 +6,6 @@ import hydro.common.JsLoggingUtils.LogExceptionsCallback
 import hydro.common.JsLoggingUtils.logExceptions
 import hydro.flux.stores.StateStore
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.component.builder.Builder
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.collection.immutable.Seq
@@ -23,91 +22,57 @@ abstract class HydroReactComponent {
 
   // **************** Protected final methods ****************//
   protected lazy val component = {
-    val step1: Builder.Step1[Props] = ScalaComponent.builder[Props](config.componentName)
-    val step2: Builder.Step2[Props, State] =
-      if (this.isInstanceOf[HydroReactComponent.Stateless])
-        step1.stateless.asInstanceOf[Builder.Step2[Props, State]]
-      else step1.initialStateFromProps[State](config.initialStateFromProps)
-    val step3: Builder.Step3[Props, State, Backend] = step2.backend(config.backendConstructor)
-    var step4: Builder.Step4[Props, Children.None, State, Backend] =
-      step3.renderPS((scope, props, state) => scope.backend.render(props, state))
-
-    val dummyBackend = config.backendConstructor(null)
-    if (dummyBackend.isInstanceOf[WillMount]) {
-      step4 = step4
-        .componentWillMount(scope =>
-          scope.backend.asInstanceOf[WillMount].willMount(scope.props, scope.state)
-        )
-    }
-    if (dummyBackend.isInstanceOf[WillUnmount]) {
-      step4 = step4
-        .componentWillUnmount(scope =>
-          scope.backend.asInstanceOf[WillUnmount].willUnmount(scope.props, scope.state)
-        )
-    }
-    if (dummyBackend.isInstanceOf[DidMount]) {
-      step4 = step4
-        .componentDidMount(scope => scope.backend.asInstanceOf[DidMount].didMount(scope.props, scope.state))
-    }
-    if (dummyBackend.isInstanceOf[WillReceiveProps]) {
-      step4 = step4
-        .componentWillReceiveProps(scope =>
-          scope.backend
-            .asInstanceOf[WillReceiveProps]
-            .willReceiveProps(currentProps = scope.currentProps, nextProps = scope.nextProps, scope.state)
-        )
-    }
-    if (dummyBackend.isInstanceOf[DidUpdate]) {
-      step4 = step4
-        .componentDidUpdate(scope =>
-          scope.backend
-            .asInstanceOf[DidUpdate]
-            .didUpdate(
-              prevProps = scope.prevProps,
-              currentProps = scope.currentProps,
-              prevState = scope.prevState,
-              currentState = scope.currentState,
-            )
-        )
-    }
-    if (config.stateStoresDependencies.nonEmpty) {
-      step4 = step4
-        .componentWillMount { scope =>
-          logExceptions {
-            for (StateStoresDependency(store, _) <- getStateStoresDependencies(scope.props)) {
-              store.register(scope.backend)
-            }
-            scope.backend.updateStateFromStoresCallback(scope.props)
-          }
+    ScalaComponent.builder[Props](config.componentName)
+      .initialStateFromProps[State](config.initialStateFromProps)
+      .backend(config.backendConstructor)
+      .renderPS((scope, props, state) => scope.backend.render(props, state))
+      .componentDidMount { scope =>
+        val mount = scope.backend match {
+          case b: WillMount => b.willMount(scope.props, scope.state)
+          case _ => Callback.empty
         }
-        .componentWillReceiveProps { scope =>
-          logExceptions {
-            var anythingChanged = false
-            for {
-              (StateStoresDependency(oldStore, _), StateStoresDependency(newStore, _)) <-
-                getStateStoresDependencies(scope.currentProps) zip getStateStoresDependencies(scope.nextProps)
-              if oldStore != newStore
-            } {
-              oldStore.deregister(scope.backend)
-              newStore.register(scope.backend)
-              anythingChanged = true
-            }
-            if (anythingChanged) {
-              scope.backend.updateStateFromStoresCallback(scope.nextProps)
-            } else {
-              Callback.empty
-            }
-          }
-        }
-        .componentWillUnmount { scope =>
+        val register = if (config.stateStoresDependencies.nonEmpty) {
           LogExceptionsCallback {
-            for (StateStoresDependency(store, _) <- getStateStoresDependencies(scope.props)) {
-              store.deregister(scope.backend)
-            }
-          }
+            for (StateStoresDependency(store, _) <- getStateStoresDependencies(scope.props))
+              store.register(scope.backend)
+          } >> scope.backend.updateStateFromStoresCallback(scope.props)
+        } else Callback.empty
+        val didMount = scope.backend match {
+          case b: DidMount => b.didMount(scope.props, scope.state)
+          case _ => Callback.empty
         }
-    }
-    step4.build
+        mount >> register >> didMount
+      }
+      .componentDidUpdate { scope =>
+        val propsChanged = scope.prevProps != scope.currentProps
+        val receive = if (propsChanged) scope.backend match {
+          case b: WillReceiveProps => b.willReceiveProps(scope.prevProps, scope.currentProps, scope.currentState)
+          case _ => Callback.empty
+        } else Callback.empty
+        val rebind = if (propsChanged && config.stateStoresDependencies.nonEmpty) {
+          val pairs = getStateStoresDependencies(scope.prevProps) zip getStateStoresDependencies(scope.currentProps)
+          val changed = pairs.filter { case (oldDep, newDep) => oldDep.store != newDep.store }
+          if (changed.nonEmpty) LogExceptionsCallback {
+            changed.foreach { case (oldDep, newDep) => oldDep.store.deregister(scope.backend); newDep.store.register(scope.backend) }
+          } >> scope.backend.updateStateFromStoresCallback(scope.currentProps) else Callback.empty
+        } else Callback.empty
+        val didUpdate = scope.backend match {
+          case b: DidUpdate => b.didUpdate(scope.prevProps, scope.currentProps, scope.prevState, scope.currentState)
+          case _ => Callback.empty
+        }
+        receive >> rebind >> didUpdate
+      }
+      .componentWillUnmount { scope =>
+        val unregister = LogExceptionsCallback {
+          for (StateStoresDependency(store, _) <- getStateStoresDependencies(scope.props)) store.deregister(scope.backend)
+        }
+        val unmount = scope.backend match {
+          case b: WillUnmount => b.willUnmount(scope.props, scope.state)
+          case _ => Callback.empty
+        }
+        unregister >> unmount
+      }
+      .build
   }
 
   // **************** Private helper methods ****************//

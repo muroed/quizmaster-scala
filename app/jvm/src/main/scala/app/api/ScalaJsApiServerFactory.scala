@@ -72,7 +72,7 @@ final class ScalaJsApiServerFactory @Inject() (implicit
       GetInitialDataResponse(
         i18nMessages = i18n.allI18nMessages,
         nextUpdateToken = toUpdateToken(clock.nowInstant),
-        quizConfig = quizConfig,
+        quizConfig = quizConfig.copy(masterSecret = "server-auth"),
       )
 
     override def getAllEntities(types: Seq[EntityType.any]) = {

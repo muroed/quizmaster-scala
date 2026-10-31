@@ -42,7 +42,9 @@ final class ConfigModule(exitOnFailure: Boolean = true) extends AbstractModule {
       }
 
       // parse data
-      ValidatingYamlParser.parse(stringData, quizConfigParsableValue)
+      val parsed = ValidatingYamlParser.parse(stringData, quizConfigParsableValue)
+      sys.env.get("QUIZ_MASTER_PASSWORD").filter(_.nonEmpty)
+        .map(secret => parsed.copy(masterSecret = secret)).getOrElse(parsed)
     } catch {
       case e: Throwable =>
         val stackTrace = Throwables.getStackTraceAsString(e)

@@ -20,6 +20,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.{Success, Failure}
 import scala.scalajs.js
 
 final class SbadminLayout(implicit
@@ -48,7 +50,7 @@ final class SbadminLayout(implicit
   // **************** Implementation of HydroReactComponent types ****************//
   protected case class State(
       isQuizMaster: Boolean = {
-        LocalStorageClient.getMasterSecret() == Some(quizConfig.masterSecret)
+        LocalStorageClient.getMasterSecret().contains("signed-in")
       }
   )
   protected case class Props(
@@ -85,7 +87,7 @@ final class SbadminLayout(implicit
               <.li(linkToPage(AppPages.Master, "Master view")),
               <.li(
                 <.a(
-                  ^.href := s"/rounds/${quizConfig.masterSecret}/",
+                  ^.href := "/rounds/info/",
                   Bootstrap.FontAwesomeIcon("bar-chart-o", fixedWidth = true),
                   tooltip("Question stats"),
                 )
@@ -99,6 +101,7 @@ final class SbadminLayout(implicit
                   ^.onClick ==> { (e: ReactEventFromInput) =>
                     e.preventDefault()
                     LocalStorageClient.removeMasterSecret()
+                    dom.ext.Ajax.post(url = "/master/logout", headers = Map("X-Requested-With" -> "Quizmaster"))
                     $.modState(_.copy(isQuizMaster = false)).thenRun {
                       router.setPage(AppPages.TeamSelection)
                     }
@@ -123,9 +126,16 @@ final class SbadminLayout(implicit
                     promptMasterSecret() match {
                       case None => Callback.empty
                       case Some(masterSecret) =>
-                        LocalStorageClient.setMasterSecret(masterSecret)
-                        $.modState(_.copy(isQuizMaster = true)).thenRun {
-                          router.setPage(AppPages.Quiz)
+                        Callback {
+                          dom.ext.Ajax.post(url = "/master/login", data = masterSecret,
+                            headers = Map("Content-Type" -> "text/plain", "X-Requested-With" -> "Quizmaster"))
+                            .onComplete {
+                              case Success(_) =>
+                                LocalStorageClient.setMasterSecret("signed-in")
+                                $.modState(_.copy(isQuizMaster = true)).runNow()
+                                router.setPage(AppPages.Quiz)
+                              case Failure(_) => dom.window.alert("Wrong secret or login unavailable")
+                            }
                         }
                     }
                   },
@@ -189,22 +199,8 @@ final class SbadminLayout(implicit
       )
     }
 
-    private def promptMasterSecret(): Option[String] = {
-      if (quizConfig.masterSecret == "*") {
-        Some(quizConfig.masterSecret)
-      } else {
-        val userInput = dom.window.prompt(i18n("app.enter-master-secret"))
-        if (userInput == null) {
-          // Canceled
-          None
-        } else if (userInput != quizConfig.masterSecret) {
-          dom.window.alert("Wrong secret")
-          None
-        } else {
-          Some(userInput)
-        }
-      }
-    }
+    private def promptMasterSecret(): Option[String] =
+      Option(dom.window.prompt(i18n("app.enter-master-secret")))
 
     private def navbarCollapsed: Boolean = {
       // Based on Start Bootstrap code in assets/startbootstrap-sb-admin-2/dist/js/sb-admin-2.js

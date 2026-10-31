@@ -47,7 +47,7 @@ object TextInput extends HydroReactComponent {
       listener = listener,
       extraTagMods = extraTagMods,
     )
-    ref.mutableRef.component(props)
+    component.withRef(ref.mutableRef)(props)
   }
 
   def ref(): Reference = new Reference(Ref.toScalaComponent(component))
@@ -56,7 +56,7 @@ object TextInput extends HydroReactComponent {
   final class Reference private[TextInput] (private[TextInput] val mutableRef: ThisMutableRef)
       extends InputBase.Reference[String] {
     override def apply(): InputBase.Proxy[String] = {
-      mutableRef.get.asCallback.runNow() map (new Proxy(_)) getOrElse InputBase.Proxy.nullObject()
+      mutableRef.get.runNow() map (new Proxy(_)) getOrElse InputBase.Proxy.nullObject()
     }
   }
 
@@ -82,7 +82,7 @@ object TextInput extends HydroReactComponent {
   }
 
   private type ThisCtorSummoner = CtorType.Summoner.Aux[Box[Props], Children.None, CtorType.Props]
-  private type ThisMutableRef = ToScalaComponent[Props, State, Backend, ThisCtorSummoner#CT]
+  private type ThisMutableRef = ToScalaComponent[Props, State, Backend]
   private type ThisComponentU = MountedImpure[Props, State, Backend]
 
   private final class Proxy(val component: ThisComponentU) extends InputBase.Proxy[String] {
@@ -101,7 +101,7 @@ object TextInput extends HydroReactComponent {
     override def deregisterListener(listener: InputBase.Listener[String]) = ???
 
     override def focus(): Unit = {
-      component.backend.theInput.get.asCallback.runNow() match {
+      component.backend.theInput.get.runNow() match {
         case Some(input) => input.focus()
         case None        => console.log("Warning: Could not focus because input not found")
       }

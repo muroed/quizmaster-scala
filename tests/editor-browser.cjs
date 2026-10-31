@@ -1,0 +1,22 @@
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({headless:true});
+  const context = await browser.newContext({httpCredentials:{username:'editor',password:'editor-test-only-password-123'}});
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto((process.env.QUIZ_URL || 'http://127.0.0.1:19091') + '/editor');
+  await page.waitForFunction(() => document.querySelector('#yaml').value.includes('rounds:'), null, {timeout:15000});
+  const current = await page.locator('#yaml').inputValue();
+  await page.locator('#yaml').fill(current.replace(/^title:.*$/m, 'title: UI edited quiz'));
+  await page.getByRole('button', {name:'Сохранить', exact:true}).click();
+  await page.getByRole('status').getByText('Квиз сохранён в GitHub').waitFor();
+  const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aXkAAAAASUVORK5CYII=', 'base64');
+  await page.locator('#media').setInputFiles({name:'pixel.png', mimeType:'image/png', buffer:pixel});
+  await page.getByRole('button', {name:'Загрузить', exact:true}).click();
+  await page.getByRole('status').getByText('Файл загружен в GitHub').waitFor();
+  if (!(await page.locator('#uploaded').innerText()).startsWith('uploads/')) throw Error('Upload path was not shown');
+  if (errors.length) throw Error(errors.join('\n'));
+  console.log('Editor UI: open, edit, save and upload passed');
+  await browser.close();
+})().catch(error => {console.error(error);process.exit(1);});

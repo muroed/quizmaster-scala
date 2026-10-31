@@ -64,7 +64,7 @@ private[quiz] object RawVideoPlayer extends HydroReactComponent.Stateless {
       ).withRef(videoRef)
     }
 
-    private def htmlVideoElement: Option[html.Video] = videoRef.get.asCallback.runNow()
+    private def htmlVideoElement: Option[html.Video] = videoRef.get.runNow()
 
     private def trySetPlaying(playing: Boolean): Unit = {
       htmlVideoElement match {

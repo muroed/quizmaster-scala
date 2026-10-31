@@ -1,21 +1,55 @@
-name: Build and tests
-on: [pull_request, push]
+name: Build and test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    - name: Setup JDK
-      uses: actions/setup-java@v2
-      with:
-        distribution: temurin
-        java-version: 11
-    - name: Setup sbt launcher
-      uses: sbt/setup-sbt@v1
-    - name: Build and Test
-      run: sbt -v +test
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+      - name: Build image and run Scala tests
+        run: docker build -f Dockerfile.modernize -t quizmaster:ci .
+      - name: Prepare private-repository test fixture
+        run: |
+          mkdir -p /tmp/quiz-ci
+          git init --bare --initial-branch=main /tmp/quiz-ci/remote.git
+          git clone /tmp/quiz-ci/remote.git /tmp/quiz-ci/quiz
+          git -C /tmp/quiz-ci/quiz config user.name CI
+          git -C /tmp/quiz-ci/quiz config user.email ci@example.invalid
+          cp -R conf/quiz/. /tmp/quiz-ci/quiz/
+          mkdir -p /tmp/quiz-ci/quiz/quizzes
+          cp conf/quiz/quiz-config.yml /tmp/quiz-ci/quiz/quizzes/demo.yml
+          git -C /tmp/quiz-ci/quiz add .
+          git -C /tmp/quiz-ci/quiz commit -m seed
+          git -C /tmp/quiz-ci/quiz push origin main
+          git -C /tmp/quiz-ci/quiz remote set-url origin /data/remote.git
+      - name: Start application
+        run: |
+          docker run -d --name quizmaster-ci -p 127.0.0.1:19091:9000 -v /tmp/quiz-ci:/data -e QUIZ_GIT_DIR=/data/quiz -e QUIZ_CONFIG_PATH=/data/quiz/quiz-config.yml -e QUIZ_EDITOR_ORIGIN=http://127.0.0.1:19091 -e QUIZ_EDITOR_PASSWORD=editor-test-only-password-123 -e APPLICATION_SECRET=ci-only-0123456789abcdef0123456789abcdef0123456789 quizmaster:ci
+          docker exec quizmaster-ci git config --global --add safe.directory /data/quiz
+          docker exec quizmaster-ci git config --global --add safe.directory /data/remote.git
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:19091/externalapi/healthcheck/ && exit 0; sleep 2; done
+          docker logs quizmaster-ci
+          exit 1
+      - name: Install browser
+        run: |
+          npm install --no-save --ignore-scripts playwright@1.64.1
+          npx playwright install --with-deps chromium
+      - name: Test browser startup
+        run: node tests/browser-smoke.cjs
+      - name: Test editor and private Git storage
+        run: node tests/editor-git.cjs
+        env:
+          QUIZ_TEST_REMOTE: /tmp/quiz-ci/remote.git
+      - name: Test editor in browser
+        run: node tests/editor-browser.cjs
+      - name: Show application logs on failure
+        if: failure()
+        run: docker logs quizmaster-ci || true

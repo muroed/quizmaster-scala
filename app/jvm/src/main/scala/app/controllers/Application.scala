@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.time.Duration
 import java.time.LocalDateTime
 
-import akka.stream.scaladsl.StreamConverters
+import org.apache.pekko.stream.scaladsl.StreamConverters
 import app.api.ScalaJsApi.HydroPushSocketPacket.EntityModificationsWithToken
 import app.api.ScalaJsApiServerFactory
 import app.common.QuizAssets
@@ -78,13 +78,17 @@ final class Application @Inject() (implicit
   })
 
   def quizAssets(encodedSource: String): Action[AnyContent] = Action { implicit request =>
-    val assetPath =
-      quizAssets.toFullPath(
-        new String(
-          BaseEncoding.base64().decode(FilePathUtils.maybeStripExtension(encodedSource)),
-          StandardCharsets.UTF_8,
-        )
-      )
+    val requestedSource = new String(
+      BaseEncoding.base64().decode(FilePathUtils.maybeStripExtension(encodedSource)),
+      StandardCharsets.UTF_8,
+    )
+    val questions = quizConfig.rounds.flatMap(_.questions)
+    val allowed = (quizConfig.image.toSeq.map(_.src) ++ quizConfig.rounds.flatMap(_.image.toSeq.map(_.src)) ++
+      questions.flatMap(q => q.image.toSeq.map(_.src) ++ q.answerImage.toSeq.map(_.src) ++
+        q.audioSrc.toSeq ++ q.answerAudioSrc.toSeq ++ q.videoSrc.toSeq ++ q.answerVideoSrc.toSeq)).toSet
+    if (!allowed.contains(requestedSource)) NotFound
+    else {
+    val assetPath = quizAssets.toFullPath(requestedSource)
     val connection = assetPath.toFile.toURI.toURL.openConnection()
     val stream = connection.getInputStream
     val source = StreamConverters.fromInputStream(() => stream)
@@ -119,10 +123,11 @@ final class Application @Inject() (implicit
           case _             => None
         },
       )
+    }
   }
 
   def roundsInfo(secret: String) = Action { implicit request =>
-    require(secret == quizConfig.masterSecret)
+    require(MasterSession.valid(request, quizConfig, playConfiguration))
 
     val simplifiedView =
       !quizConfig.rounds.flatMap(_.questions).exists(_.onlyFirstGainsPoints) &&

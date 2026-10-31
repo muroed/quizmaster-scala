@@ -48,7 +48,7 @@ final class ImportBackupPanel(implicit
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
     override def render(props: Props, state: State): VdomElement = logExceptions {
-      implicit val _: State = state
+      implicit val autoContext1: State = state
       <.span(
         Bootstrap.Row(
           HalfPanel(

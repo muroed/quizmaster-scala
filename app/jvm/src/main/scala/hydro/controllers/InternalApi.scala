@@ -2,9 +2,13 @@ package hydro.controllers
 
 import java.nio.ByteBuffer
 
-import akka.actor.ActorSystem
-import akka.stream.scaladsl._
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl._
 import app.api.Picklers._
+import app.controllers.MasterSession
+import app.models.quiz.config.QuizConfig
+import app.api.ScalaJsApi.TeamOrQuizStateUpdate
+import app.api.ScalaJsApi.TeamOrQuizStateUpdate._
 import app.api.ScalaJsApi.HydroPushSocketPacket
 import app.api.ScalaJsApi.HydroPushSocketPacket.EntityModificationsWithToken
 import app.api.ScalaJsApi.UpdateToken
@@ -39,6 +43,7 @@ final class InternalApi @Inject() (implicit
     entityAccess: JvmEntityAccess,
     scalaJsApiServerFactory: ScalaJsApiServerFactory,
     playConfiguration: play.api.Configuration,
+    quizConfig: QuizConfig,
     env: play.api.Environment,
     scalaJsApiCaller: ScalaJsApiCaller,
     hydroPushSocketHeartbeatScheduler: HydroPushSocketHeartbeatScheduler,
@@ -46,11 +51,24 @@ final class InternalApi @Inject() (implicit
     with I18nSupport {
 
   def scalaJsApiPost(path: String) = Action(parse.raw) { implicit request =>
-    val requestBuffer: ByteBuffer = request.body.asBytes(parse.UNLIMITED).get.asByteBuffer
-    val argsMap = Unpickle[Map[String, ByteBuffer]].fromBytes(requestBuffer)
-
-    val bytes = doScalaJsApiCall(path, argsMap)
-    Ok(bytes)
+    if (!request.headers.get("X-Requested-With").contains("Quizmaster")) Forbidden
+    else {
+      val requestBuffer: ByteBuffer = request.body.asBytes(parse.UNLIMITED).get.asByteBuffer
+      val argsMap = Unpickle[Map[String, ByteBuffer]].fromBytes(requestBuffer)
+      val master = MasterSession.valid(request, quizConfig, playConfiguration)
+      val allowed = path match {
+        case "persistEntityModifications" => master
+        case "doTeamOrQuizStateUpdate" =>
+          val update = Unpickle[TeamOrQuizStateUpdate].fromBytes(argsMap("teamOrQuizStateUpdate").duplicate())
+          update match {
+            case _: MaybeAddTeam | _: MaybeUpdateTeamName | _: AddSubmission | _: ToggleTimerPaused => true
+            case _ => master
+          }
+        case _ => true
+      }
+      if (!allowed) Forbidden("Master authentication required")
+      else Ok(doScalaJsApiCall(path, argsMap))
+    }
   }
 
   def scalaJsApiGet(path: String) = Action(parse.raw) { implicit request =>

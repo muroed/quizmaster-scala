@@ -45,8 +45,8 @@ object RouterContext {
     override def toPath(page: Page): Path = routerCtl.pathFor(page)
     override def anchorWithHrefTo(page: Page): VdomTagOf[html.Anchor] = {
       def go(e: ReactMouseEvent): Callback =
-        CallbackOption.unless(ReactMouseEvent targetsNewTab_? e) >>
-          CallbackOption.asEventDefault(e, Callback { setPage(page) })
+        if (ReactMouseEvent targetsNewTab_? e) Callback.empty
+        else Callback { e.preventDefault(); setPage(page) }
       <.a(^.href := routerCtl.urlFor(page).value, ^.onClick ==> go)
     }
 

@@ -1,13 +1,16 @@
 import sbt.Keys._
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
+import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import sbt.Project.projectToRef
 
 // Treat eviction issues as warning
 ThisBuild / evictionErrorLevel := Level.Warn
 
 // a special crossProject for configuring a JS/JVM/shared structure
-lazy val shared = (crossProject.crossType(CrossType.Pure) in file("app/shared"))
+lazy val shared = (crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Pure) in file("app/shared"))
   .settings(
     scalaVersion := BuildSettings.versions.scala,
+    scalacOptions += "-Xasync",
     libraryDependencies ++= BuildSettings.sharedDependencies.value
   )
 
@@ -41,10 +44,14 @@ lazy val client: Project = (project in file("app/js/client"))
     // use uTest framework for tests
     testFrameworks += new TestFramework("utest.runner.Framework"),
     // Execute the tests in browser-like environment
-    Test / requiresDOM := true,
+
+    Test / jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(org.scalajs.jsenv.nodejs.NodeJSEnv.Config().withEnv(Map("NODE_OPTIONS" -> "--openssl-legacy-provider --require jsdom-global/register", "NODE_PATH" -> "/usr/local/lib/node_modules"))),
     // Fix for bug that produces a huge amount of warnings (https://github.com/webpack/webpack/issues/4518).
     // Unfortunately, this means no source maps :-/
-    fastOptJS / emitSourceMaps := false,
+    Compile / fastLinkJS / scalaJSLinkerConfig ~= (_.withSourceMap(false)),
+    webpack / version := "5.112.2",
+    startWebpackDevServer / version := "6.1.0",
+    webpackCliVersion := "7.3.1",
     // scalajs-bundler NPM packages
     Compile / npmDependencies ++= BuildSettings.npmDependencies(baseDirectory.value / "../../.."),
     // Custom webpack config
@@ -52,7 +59,7 @@ lazy val client: Project = (project in file("app/js/client"))
     fastOptJS / webpackConfigFile := Some(baseDirectory.value / "../webpack.dev.js"),
     fullOptJS / webpackConfigFile := Some(baseDirectory.value / "../webpack.prod.js"),
     // Enable faster builds when developing
-    webpackBundlingMode := BundlingMode.LibraryOnly(),
+    webpackBundlingMode := BundlingMode.Application,
     Test / webpackBundlingMode := BundlingMode.LibraryAndApplication()
   )
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
@@ -74,14 +81,13 @@ lazy val server = (project in file("app/jvm"))
     // connect to the client project
     scalaJSProjects := clientProjects,
     Assets / pipelineStages := Seq(scalaJSPipeline),
-    pipelineStages := Seq(scalaJSProd, digest, gzip),
+    pipelineStages := Seq(digest, gzip),
     // Expose as sbt-web assets some files retrieved from the NPM packages of the `client` project
     // @formatter:off
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "jquery").allPaths }.value,
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "bootstrap").allPaths }.value,
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "metismenu").allPaths }.value,
     npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "font-awesome").allPaths }.value,
-    npmAssets ++= NpmAssets.ofProject(client) { modules => (modules / "startbootstrap-sb-admin-2").allPaths }.value,
     // @formatter:on
     // compress CSS
     Assets / LessKeys.compress := true

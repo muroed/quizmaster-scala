@@ -2,10 +2,10 @@
 # This file contains all fields that you might want to update when creating your own quiz.
 
 title: Demo quiz
-image: https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/OOUI_Talk_icon_-_Question_2.svg/1024px-OOUI_Talk_icon_-_Question_2.svg.png # optional
+image: geography/globe.png # optional
 author: Jens Nyman # Change this to your name
 instructionsOnFirstSlide: Please, don't look up the answers online
-masterSecret: quiz # Remove this line to allow anyone to access the master controls
+masterSecret: demo-master-password-2026 # Remove this line to allow anyone to access the master controls
 language: en # This is the default. The other supported languages can be found in application.conf
 
 usageStatistics:
@@ -33,7 +33,7 @@ defaults:
 
 rounds:
   - name: Geography
-    image: https://freesvg.org/img/globe-310324.png # optional
+    image: geography/globe.png # optional
     questions:
       # Standard textual question
       - question: Who was the country Colombia named after?
@@ -50,7 +50,7 @@ rounds:
       - question: What is the capital of France?
         choices: [Paris, London, Brussels, Berlin]
         answer: Paris
-        image: https://raw.githubusercontent.com/nymanjens/quizmaster/master/conf/quiz/assets/geography/france.png
+        image: geography/globe.png
         answerImage: geography/france-answer.png
         # You can also use answerAudio: and answerVideo:, which are similar to audio: and video:.
         answerDetail: |
@@ -83,14 +83,14 @@ rounds:
 
 
   - name: Music round
-    image: https://upload.wikimedia.org/wikipedia/commons/f/f6/Music_1_-_The_Noun_Project.svg # optional
+    image: geography/globe.png # optional
     questions:
       # Standard textual question with audio
       - question: After which season is this track named?
         questionDetail: (Royalty Free Music from Bensound)
         answer: Summer
         answerDetail: (By Bensound)
-        audio: https://www.bensound.com/bensound-music/bensound-summer.mp3
+        audio: music_round/bensound-summer.mp3
 
       # Special question type: Provide multiple answers
       - questionType: multipleAnswers
@@ -102,7 +102,7 @@ rounds:
           - Kirk Hammett
           - Robert Trujillo
         answersHaveToBeInSameOrder: false
-        image: https://upload.wikimedia.org/wikipedia/commons/9/9e/Metallica_-_2003.jpg
+        image: geography/globe.png
         pointsToGainPerAnswer: 1
 
       # Special question type: Ask multiple questions
@@ -115,4 +115,4 @@ rounds:
           - {question: "What is the song title?", answer: "Smells Like Teen Spirit", answerDetail: 1991}
           - {question: "Which artist?", answer: Nirvana}
           - {question: "What year was the song released?", answer: 1991, pointsToGain: 2}
-        image: https://cdn.pixabay.com/photo/2016/01/12/17/20/sheet-music-1136234_960_720.png
+        image: geography/globe.png

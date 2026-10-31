@@ -25,7 +25,7 @@ trait JsEntityAccess extends EntityAccess {
    * `newQuery()` has been updated.
    */
   def persistModifications(modifications: Seq[EntityModification]): Future[Unit]
-  final def persistModifications(modifications: EntityModification*): Future[Unit] =
+  final def persistModifications(modifications: EntityModification*)(implicit dummy: DummyImplicit): Future[Unit] =
     persistModifications(modifications.toVector)
 
   // **************** Other ****************//

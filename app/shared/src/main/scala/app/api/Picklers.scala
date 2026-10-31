@@ -8,7 +8,6 @@ import app.models.quiz.SubmissionEntity
 import app.models.quiz.Team
 import app.models.quiz.config.QuizConfig.Question
 import boopickle.Default._
-import boopickle.DefaultBasic.PicklerGenerator
 import hydro.api.StandardPicklers
 import hydro.models.Entity
 

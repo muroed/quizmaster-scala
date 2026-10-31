@@ -33,13 +33,14 @@
     <link href="@routes.Assets.versioned("lib/fontello/css/fontello.css")" rel="stylesheet">
 
     @* startbootstrap-sb-admin-2 CSS *@
-    <link href="@routes.Assets.versioned("startbootstrap-sb-admin-2/dist/css/sb-admin-2.css")" rel="stylesheet">
+    <link href="@routes.Assets.versioned("stylesheets/sb-admin-2.min.css")" rel="stylesheet">
 
     @* Custom CSS *@
     <link href="@routes.Assets.versioned("stylesheets/main.min.css")" rel="stylesheet">
 
   </head>
   <body>
+    <a href="/editor" style="position:fixed;right:1rem;bottom:1rem;z-index:1000;background:white;padding:.5rem;border:1px solid #ccc;border-radius:.4rem">Редактор квизов</a>
 
     @content
 

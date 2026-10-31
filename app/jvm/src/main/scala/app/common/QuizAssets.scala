@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import scala.jdk.CollectionConverters._
 import com.google.common.base.CharMatcher
 import com.google.common.hash
 import com.google.common.hash.Hashing
@@ -77,11 +78,15 @@ final class QuizAssets @Inject() (implicit
   }
 
   private def fullPathOrValidationErrorFromRelativePath(relativePath: String): Try[Path] = {
+    val relative = Paths.get(relativePath)
+    require(!relative.isAbsolute && !relative.iterator().asScala.exists(_.toString == ".."), "Invalid media path")
     val existingPaths =
       for {
         assetFolder <- Seq("assets", "images", "audio", "video")
-        fullPath <- Some(configPath.resolve(assetFolder).resolve(relativePath))
-        if Files.exists(fullPath)
+        root <- Some(configPath.resolve(assetFolder))
+        if Files.isDirectory(root)
+        fullPath <- Some(root.resolve(relative).normalize())
+        if Files.isRegularFile(fullPath) && fullPath.toRealPath().startsWith(root.toRealPath())
       } yield fullPath
 
     existingPaths match {

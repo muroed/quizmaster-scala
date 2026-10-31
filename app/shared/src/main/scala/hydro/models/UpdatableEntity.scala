@@ -105,7 +105,7 @@ object UpdatableEntity {
 
           if (forceIncrement && that.otherFieldsTime.isDefined) {
             val unextendedTimePerField: Map[ModelField.any, Instant] =
-              this.timePerField.filterKeys(k => !(that.timePerField contains k))
+              this.timePerField.filter { case (k, _) => !(that.timePerField contains k) }
             if (unextendedTimePerField.nonEmpty && candidate.get < unextendedTimePerField.values.max) {
               // This LastUpdateTime has an untouched field value larger than the given base time
               Some(unextendedTimePerField.values.max plusNanos 1)

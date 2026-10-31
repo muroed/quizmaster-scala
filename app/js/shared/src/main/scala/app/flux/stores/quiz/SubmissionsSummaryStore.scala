@@ -44,8 +44,8 @@ final class SubmissionsSummaryStore(implicit
       latestSubmissionsMap = allSubmissions
         .groupBy(e => QuestionIndex(roundIndex = e.roundIndex, questionIndex = e.questionIndex))
         .mapValues { submissions =>
-          submissions.groupBy(_.teamId).mapValues(_.last)
-        },
+          submissions.groupBy(_.teamId).view.mapValues(_.last).toMap
+        }.toMap,
       roundToTimeEstimateMap = (
         for (roundIndex <- quizConfig.rounds.indices)
           yield roundIndex -> {

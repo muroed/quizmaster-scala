@@ -61,7 +61,7 @@ object GuavaReplacement {
           nextPart += char
       }
       parts += nextPart.result()
-      var result = Seq(parts: _*)
+      var result = parts.toSeq
       if (_trimResults) {
         result = result.map(_.trim)
       }

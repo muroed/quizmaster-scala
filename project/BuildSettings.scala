@@ -1,5 +1,6 @@
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import sbt._
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 
 /**
   * Application settings. Configure the build for your application here.
@@ -17,13 +18,12 @@ object BuildSettings {
   val scalacOptions = Seq(
     "-encoding",
     "UTF-8",
+    "-Xasync",
     "-feature", // Emit warning and location for usages of features that should be imported explicitly
     "-unchecked", // Enable additional warnings where generated code depends on assumptions
-    "-Xfuture", // Warn of changes to future major Scala version
     "-Xlint:-unused,_",
-    "-Yno-adapted-args", // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
     "-Ywarn-dead-code",
-    "-Ywarn-unused:-imports"
+    "-Wunused:privates,locals,patvars"
     // "-Xfatal-warnings", // Make warnings behave like errors
     //"-deprecation", // Emit warning and location for usages of deprecated APIs
     // "-Ywarn-value-discard" // Warning for value discard bugs (see
@@ -34,11 +34,11 @@ object BuildSettings {
 
   /** Declare global dependency versions here to avoid mismatches in multi part dependencies */
   object versions {
-    val scala = "2.12.2" // Must be the same as in .travis.yml
-    val play = "2.8.20" // Must be the same as the Play sbt-plugin in plugins.sbt
+    val scala = "2.13.18" // Must be the same as in .travis.yml
+    val play = "3.0.12" // Must be the same as the Play sbt-plugin in plugins.sbt
 
-    val uTest = "0.4.7"
-    val scalajsReact = "1.2.1"
+    val uTest = "0.9.5"
+    val scalajsReact = "4.1.0"
   }
 
   /**
@@ -47,33 +47,33 @@ object BuildSettings {
     */
   val sharedDependencies = Def.setting(
     Seq(
-      "org.scala-lang.modules" %% "scala-async" % "0.9.6",
-      "com.lihaoyi" %%% "autowire" % "0.2.6",
-      "me.chrons" %%% "boopickle" % "1.2.5"
+      "org.scala-lang.modules" %%% "scala-async" % "1.0.1",
+      "com.lihaoyi" %%% "autowire" % "0.3.3",
+      "io.suzaku" %%% "boopickle" % "1.5.0"
     ))
 
   /** Dependencies only used by the JVM project */
   val jvmDependencies = Def.setting(
     Seq(
-      "com.vmunier" %% "scalajs-scripts" % "1.1.2",
+      "com.vmunier" %% "scalajs-scripts" % "1.3.0",
       "com.lihaoyi" %% "utest" % versions.uTest % Test,
-      "com.typesafe.play" %% "play-jdbc" % versions.play,
-      "com.typesafe.play" %% "play-cache" % versions.play,
-      "com.typesafe.play" %% "play-ws" % versions.play,
-      "com.typesafe.play" %% "play-specs2" % versions.play % Test,
-      "com.lihaoyi" %% "pprint" % "0.5.6" % Test,
-      "com.google.truth" % "truth" % "1.1.2" % Test,
-      "com.typesafe.slick" %% "slick" % "3.2.0",
-      "com.typesafe.slick" %% "slick-hikaricp" % "3.2.0",
+      "org.playframework" %% "play-jdbc" % versions.play,
+      "org.playframework" %% "play-cache" % versions.play,
+      "org.playframework" %% "play-ws" % versions.play,
+      "org.playframework" %% "play-specs2" % versions.play % Test,
+      "com.lihaoyi" %% "pprint" % "0.9.6" % Test,
+      "com.google.truth" % "truth" % "1.4.5" % Test,
+      "com.typesafe.slick" %% "slick" % "3.6.1",
+      "com.typesafe.slick" %% "slick-hikaricp" % "3.6.1",
       "commons-lang" % "commons-lang" % "2.6",
-      "mysql" % "mysql-connector-java" % "5.1.36",
-      "com.h2database" % "h2" % "1.4.195",
-      "org.xerial" % "sqlite-jdbc" % "3.8.11.2",
-      "com.google.code.findbugs" % "jsr305" % "1.3.9",
+      "com.mysql" % "mysql-connector-j" % "26.10.0",
+      "com.h2database" % "h2" % "2.5.252",
+      "org.xerial" % "sqlite-jdbc" % "3.54.1.0",
+      "com.google.code.findbugs" % "jsr305" % "3.0.2",
       "org" % "jaudiotagger" % "2.0.3",
-      "com.google.guava" % "guava" % "30.1-jre",
+      "com.google.guava" % "guava" % "33.7.2-jre",
       "com.googlecode.json-simple" % "json-simple" % "1.1.1",
-      "org.yaml" % "snakeyaml" % "1.14",
+      "org.yaml" % "snakeyaml" % "2.7",
       "org.scalaj" %% "scalaj-http" % "2.4.2",
       "net.jcip" % "jcip-annotations" % "1.0"
     ))
@@ -84,26 +84,26 @@ object BuildSettings {
       "com.github.japgolly.scalajs-react" %%% "core" % versions.scalajsReact,
       "com.github.japgolly.scalajs-react" %%% "extra" % versions.scalajsReact,
       "com.github.japgolly.scalajs-react" %%% "test" % versions.scalajsReact % Test,
-      "org.scala-js" %%% "scalajs-dom" % "0.9.1",
-      "org.scala-js" %%% "scalajs-java-time" % "0.2.0",
+      "org.scala-js" %%% "scalajs-dom" % "2.8.1",
+      "org.scala-js" %%% "scalajs-java-time" % "1.0.0",
       "com.lihaoyi" %%% "utest" % versions.uTest % Test
     ))
 
   def npmDependencies(projectRootDirectory: File): Seq[(String, String)] = Seq(
     // For assets only
-    "jquery" -> "1.11.1",
-    "bootstrap" -> "3.3.6",
-    "metismenu" -> "1.1.3",
-    "font-awesome" -> "4.6.3",
-    "startbootstrap-sb-admin-2" -> "1.0.7",
+    "jquery" -> "4.0.0",
+    "bootstrap" -> "5.3.8",
+    "metismenu" -> "3.1.0",
+    "font-awesome" -> "4.7.0",
     // Used in ScalaJS code
-    "lokijs" -> "1.4.2",
-    "react" -> "16.3.1",
-    "react-dom" -> "16.3.1",
-    "react-beautiful-dnd" -> "10.0.3",
+    "lokijs" -> "1.5.12",
+    "react" -> "19.3.1",
+    "react-dom" -> "19.3.1",
+    "@hello-pangea/dnd" -> "18.0.1",
     "escape-html" -> "1.0.3",
-    "mousetrap" -> "^1.6.2",
-    "recharts" -> "1.8.5",
+    "mousetrap" -> "1.6.5",
+    "recharts" -> "3.10.1",
+    "jsdom" -> "30.1.3",
     "global-mousetrap" -> s"file:${projectRootDirectory / "app/js/shared/src/main/npm-packages/global-mousetrap"}"
   )
 }

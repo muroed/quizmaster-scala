@@ -46,7 +46,7 @@ abstract class JvmEntityAccessBase(implicit clock: Clock) extends EntityAccess {
   def entityModificationPublisher: Publisher[EntityModificationsWithToken] = entityModificationPublisher_
 
   // **************** Setters ****************//
-  def persistEntityModifications(modifications: EntityModification*)(implicit user: User): Unit = {
+  def persistEntityModifications(modifications: EntityModification*)(implicit user: User, dummy: DummyImplicit): Unit = {
     persistEntityModifications(modifications.toVector)
   }
 

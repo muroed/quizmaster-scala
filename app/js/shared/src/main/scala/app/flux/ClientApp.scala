@@ -40,7 +40,7 @@ object ClientApp {
       setUpGamepad()
 
       // tell React to render the router in the document body
-      globalModule.router().renderIntoDOM(dom.document.getElementById("root"))
+      japgolly.scalajs.react.ReactDOMClient.createRoot(dom.document.getElementById("root")).render(globalModule.router())
     }
   }
 

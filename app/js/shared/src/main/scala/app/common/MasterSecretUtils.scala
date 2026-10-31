@@ -14,12 +14,12 @@ object MasterSecretUtils {
       returnValueIfMaster: => VdomElement,
       router: RouterContext,
   )(implicit quizConfig: QuizConfig): VdomElement = {
-    if (LocalStorageClient.getMasterSecret() == Some(quizConfig.masterSecret)) {
+    if (LocalStorageClient.getMasterSecret().contains("signed-in")) {
       returnValueIfMaster
     } else {
       println(
         s"  Redirecting to TeamController because stored master secret " +
-          s"(${LocalStorageClient.getMasterSecret()}) is different from the required one"
+          "is not present"
       )
       router.setPage(AppPages.TeamSelection)
       <.span()

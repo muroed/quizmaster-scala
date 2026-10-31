@@ -3,7 +3,7 @@ package hydro.jsfacades
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.Children
 import japgolly.scalajs.react.JsComponent
-import japgolly.scalajs.react.raw
+import japgolly.scalajs.react.facade
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -25,7 +25,7 @@ object ReactBeautifulDnd {
   }
 
   def Droppable(droppableId: String)(children: (Provided, Snapshot) => VdomNode) = {
-    val jsChildren: js.Function2[Provided, Snapshot, raw.React.Element] =
+    val jsChildren: js.Function2[Provided, Snapshot, facade.React.Element] =
       (a, b) => <.span(children(a, b)).rawElement
 
     val component = JsComponent[js.Object, Children.None, Null](DroppableComponent)
@@ -33,7 +33,7 @@ object ReactBeautifulDnd {
   }
 
   def Draggable(key: Any, draggableId: String, index: Int)(children: (Provided, Snapshot) => VdomNode) = {
-    val jsChildren: js.Function2[Provided, Snapshot, raw.React.Element] =
+    val jsChildren: js.Function2[Provided, Snapshot, facade.React.Element] =
       (a, b) => <.span(children(a, b)).rawElement
 
     val component = JsComponent[js.Object, Children.None, Null](DraggableComponent)
@@ -65,15 +65,15 @@ object ReactBeautifulDnd {
   }
 
   // **************** Private inner types ****************//
-  @JSImport("react-beautiful-dnd", "DragDropContext")
+  @JSImport("@hello-pangea/dnd", "DragDropContext")
   @js.native
   private object DragDropContextComponent extends js.Object
 
-  @JSImport("react-beautiful-dnd", "Droppable")
+  @JSImport("@hello-pangea/dnd", "Droppable")
   @js.native
   private object DroppableComponent extends js.Object
 
-  @JSImport("react-beautiful-dnd", "Draggable")
+  @JSImport("@hello-pangea/dnd", "Draggable")
   @js.native
   private object DraggableComponent extends js.Object
 

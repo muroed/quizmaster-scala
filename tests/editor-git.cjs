@@ -1,0 +1,26 @@
+const assert = require('node:assert/strict');
+const { execFileSync } = require('node:child_process');
+const base = process.env.QUIZ_URL || 'http://127.0.0.1:19091';
+const auth = 'Basic ' + Buffer.from('editor:editor-test-only-password-123').toString('base64');
+const writeHeaders = {'Authorization': auth, 'X-Requested-With': 'QuizmasterEditor', 'Origin': base};
+(async () => {
+  assert.equal((await fetch(base + '/editor/api/quizzes')).status, 401);
+  let res = await fetch(base + '/editor/api/quizzes', {headers: {Authorization: auth}});
+  assert.equal(res.status, 200); let state = await res.json();
+  assert.ok(state.quizzes.includes('demo.yml'));
+  res = await fetch(base + '/editor/api/quizzes/demo.yml', {headers: {Authorization: auth}});
+  const original = await res.json();
+  const edited = original.yaml.replace('title: Demo quiz', 'title: CI edited quiz');
+  res = await fetch(base + '/editor/api/quizzes/demo.yml', {method:'PUT', headers:{...writeHeaders, 'Content-Type':'application/json'}, body:JSON.stringify({yaml:edited,revision:original.revision})});
+  assert.equal(res.status, 200, await res.text());
+  const remote = execFileSync('git', ['--git-dir', process.env.QUIZ_TEST_REMOTE, 'show', 'main:quizzes/demo.yml'], {encoding:'utf8'});
+  assert.ok(remote.includes('title: CI edited quiz'));
+  res = await fetch(base + '/editor/api/quizzes/demo.yml', {method:'PUT', headers:{...writeHeaders, 'Content-Type':'application/json'}, body:JSON.stringify({yaml:original.yaml,revision:original.revision})});
+  assert.equal(res.status, 400);
+  res = await fetch(base + '/editor/api/quizzes', {headers: {Authorization: auth}}); state = await res.json();
+  res = await fetch(base + '/editor/api/media/test.png', {method:'POST',headers:{...writeHeaders,'Content-Type':'application/octet-stream','X-Quiz-Revision':state.revision},body:Buffer.alloc(128 * 1024, 3)});
+  assert.equal(res.status, 200, await res.text());
+  res = await fetch(base + '/editor/api/media/test.png', {method:'POST',headers:{...writeHeaders,Origin:'https://evil.example','Content-Type':'application/octet-stream','X-Quiz-Revision':state.revision},body:Buffer.from('x')});
+  assert.equal(res.status, 403);
+  console.log('Editor authentication, Git persistence, conflict detection and media upload passed');
+})().catch(e => { console.error(e); process.exit(1); });

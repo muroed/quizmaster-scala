@@ -61,7 +61,7 @@ object TextInput {
       valueTransformer = ValueTransformer.nullInstance,
       extra = ExtraProps(inputType = inputType, focusOnMount = focusOnMount, disabled = disabled),
     )
-    ref.mutableRef.component(props)
+    component.withRef(ref.mutableRef)(props)
   }
 
   def ref(): Reference = new Reference(Ref.toScalaComponent(component))

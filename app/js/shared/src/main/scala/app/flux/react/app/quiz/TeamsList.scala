@@ -74,7 +74,7 @@ final class TeamsList(implicit
 
     override def render(props: Props, state: State): VdomNode = logExceptions {
       implicit val quizState = state.quizState
-      implicit val _ = props
+      implicit val autoContext1 = props
       val maybeQuestion = quizState.maybeQuestion
       val showSubmissionValue = maybeQuestion.exists { question =>
         (
@@ -285,7 +285,7 @@ final class TeamsList(implicit
                     ^.key := s"answer-$index",
                     ^.className := (if (answer.isCorrectAnswer) "correct" else "incorrect"),
                     answer.text,
-                  ),
+                  )
                 },
               ),
             )

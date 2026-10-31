@@ -8,6 +8,17 @@ GET  /app/                             hydro.controllers.StandardActions.reactAp
 GET  /app/*anyString                   hydro.controllers.StandardActions.reactApp(anyString)
 GET  /appwithoutcreds/                 hydro.controllers.StandardActions.reactAppWithoutCredentials
 
+# Authenticated quiz editor
+GET    /editor                           app.controllers.QuizEditor.index
+GET    /editor/api/quizzes               app.controllers.QuizEditor.list
+GET    /editor/api/quizzes/:name         app.controllers.QuizEditor.read(name: String)
+PUT    /editor/api/quizzes/:name         app.controllers.QuizEditor.save(name: String)
+POST   /editor/api/media/:name           app.controllers.QuizEditor.upload(name: String)
+POST   /editor/api/activate/:name        app.controllers.QuizEditor.activate(name: String)
+
+POST   /master/login                     app.controllers.MasterAuth.login
+POST   /master/logout                    app.controllers.MasterAuth.logout
+
 # Internal API
 POST /scalajsapi/*path                 hydro.controllers.InternalApi.scalaJsApiPost(path: String)
 GET  /scalajsapi/*path                 hydro.controllers.InternalApi.scalaJsApiGet(path: String)
@@ -17,7 +28,7 @@ GET  /websocket/hydropush/:updateToken/  hydro.controllers.InternalApi.hydroPush
 GET  /externalapi/healthcheck/         hydro.controllers.StandardActions.healthCheck
 GET  /versions/                        app.controllers.Application.versionsInfo
 GET  /rounds/:secret/                  app.controllers.Application.roundsInfo(secret)
-GET  /import/:secret/:serverDomain/    app.controllers.ExternalApi.importFromOtherServer(secret, serverDomain)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                     controllers.Assets.versioned(path="/public", file: Asset)

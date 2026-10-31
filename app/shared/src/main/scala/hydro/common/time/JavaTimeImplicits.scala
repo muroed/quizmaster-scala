@@ -49,6 +49,7 @@ object JavaTimeImplicits {
 //    override def compare(x: Duration, y: Duration): Int = x compareTo y
 //  }
   implicit object DurationNumeric extends Numeric[Duration] {
+    override def parseString(s: String): Option[Duration] = scala.util.Try(Duration.parse(s)).toOption
     override def plus(x: Duration, y: Duration): Duration = x plus y
     override def minus(x: Duration, y: Duration): Duration = x minus y
     override def times(x: Duration, y: Duration): Duration = ???

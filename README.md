@@ -90,3 +90,13 @@ Follow these steps to host a quiz:
   - `alt + enter`: Toggle enlarged image (if there is a visible image)
   - `a`: toggle the answer to be visible in the master view (http://localhost:9000/app/master)
 
+
+## Git-backed quiz editor
+
+The `/editor` page lets an editor open and save quiz YAML files and upload image or audio files into a dedicated private Git repository. Log in as `editor` with `QUIZ_EDITOR_PASSWORD`. Use the displayed media path in a quiz's `image` or `audio` field. Saving a quiz commits and pushes it; activating a quiz also restarts the application and clears the current game state.
+
+The repository must have a `main` branch containing `quiz-config.yml`, a `quizzes/` directory of `.yml` files, and an `assets/` directory. `QUIZ_GIT_URL` must be a GitHub SSH URL, and the deployed SSH key must have write access only to this private repository. Set `QUIZ_EDITOR_ORIGIN` to the exact HTTPS origin, `QUIZ_MASTER_PASSWORD` to a distinct strong master password, and `APPLICATION_SECRET` to an independent strong random value. Supply credentials through the runtime secret store, not in the repository. If no Git URL is configured, the bundled demo configuration is used.
+
+Quizmaster sends quiz questions and answers to participant browsers as part of normal operation. A private Git repository protects the stored files; it does not hide quiz answers from someone who inspects the application's client data.
+
+To build and test locally, use `docker build -f Dockerfile.modernize -t quizmaster .`; the build runs the Scala test suite. The GitHub Actions workflow also tests team registration, master authentication, editor access, Git persistence, and media uploads with an isolated test repository.

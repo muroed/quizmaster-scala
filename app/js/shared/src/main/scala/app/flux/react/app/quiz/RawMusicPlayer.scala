@@ -75,6 +75,6 @@ private[quiz] object RawMusicPlayer extends HydroReactComponent.Stateless {
       ).withRef(audioRef)
     }
 
-    def htmlAudioElement: Option[HTMLAudioElement] = audioRef.get.asCallback.runNow()
+    def htmlAudioElement: Option[HTMLAudioElement] = audioRef.get.runNow()
   }
 }

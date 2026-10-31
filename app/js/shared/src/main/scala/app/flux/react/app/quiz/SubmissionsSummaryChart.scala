@@ -55,8 +55,8 @@ final class SubmissionsSummaryChart(implicit
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
     override def render(props: Props, state: State): VdomNode = logExceptions {
-      implicit val _ = props
-      implicit val __ = state
+      implicit val autoContext1 = props
+      implicit val autoContext2 = state
       <.div(
         ^.style := js.Dictionary("maxWidth" -> "1300px"),
         Recharts.ResponsiveContainer(width = "100%", height = 350)(

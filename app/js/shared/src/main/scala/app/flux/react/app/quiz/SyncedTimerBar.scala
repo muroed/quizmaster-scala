@@ -209,7 +209,7 @@ final class SyncedTimerBar(implicit
     }
 
     private def maybeShowProgressSteps(showMasterData: Boolean, quizState: QuizState): VdomNode = {
-      implicit val _: QuizState = quizState
+      implicit val autoContext1: QuizState = quizState
 
       <<.ifThen(showMasterData) {
         <<.ifDefined(quizState.maybeQuestion) { question =>

@@ -64,8 +64,8 @@ final class SubmissionsSummaryTable(implicit
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
     override def render(props: Props, state: State): VdomNode = logExceptions {
-      implicit val _ = props
-      implicit val __ = state
+      implicit val autoContext1 = props
+      implicit val autoContext2 = state
       <.div(
         ^.className := "table-responsive submissions-summary",
         <.table(

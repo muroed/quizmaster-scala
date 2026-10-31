@@ -70,7 +70,7 @@ class SelectInput[Value] private (implicit valueTag: ClassTag[Value]) {
       extra = ExtraProps.create(options, valueToId = valueToId, valueToName = valueToName),
       valueTransformer = ValueTransformer,
     )
-    ref.mutableRef.component(props)
+    component.withRef(ref.mutableRef)(props)
   }
 
   def ref(): Reference = new Reference(Ref.toScalaComponent(component))

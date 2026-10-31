@@ -1,11 +1,2 @@
 const scalajsConfig = require('./scalajs.webpack.config');
-
-module.exports = Object.assign(
-  {},
-  scalajsConfig,
-  {
-    node: {
-      fs: "empty",
-    },
-  }
-);
+module.exports = { ...scalajsConfig, resolve: { ...scalajsConfig.resolve, fallback: { fs: false } } };

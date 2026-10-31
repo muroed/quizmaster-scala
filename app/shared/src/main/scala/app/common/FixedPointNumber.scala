@@ -65,6 +65,7 @@ object FixedPointNumber {
   }
 
   implicit object FixedPointNumberNumeric extends Numeric[FixedPointNumber] {
+    override def parseString(s: String): Option[FixedPointNumber] = scala.util.Try(FixedPointNumber(s.toDouble)).toOption
     override def plus(x: FixedPointNumber, y: FixedPointNumber): FixedPointNumber = {
       new FixedPointNumber(x.numberWithoutPoint + y.numberWithoutPoint)
     }

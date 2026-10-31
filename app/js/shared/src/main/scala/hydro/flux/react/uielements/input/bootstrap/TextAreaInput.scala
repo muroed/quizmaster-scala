@@ -58,7 +58,7 @@ object TextAreaInput {
       listener = listener,
       valueTransformer = ValueTransformer.nullInstance,
     )
-    ref.mutableRef.component(props)
+    component.withRef(ref.mutableRef)(props)
   }
 
   def ref(): Reference = new Reference(Ref.toScalaComponent(component))

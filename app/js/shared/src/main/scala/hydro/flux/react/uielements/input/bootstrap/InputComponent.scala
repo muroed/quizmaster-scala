@@ -81,21 +81,21 @@ object InputComponent {
           )
         }
       )
-      .componentWillReceiveProps(scope =>
+      .componentDidUpdate(scope =>
         LogExceptionsCallback {
           // If the props have changed, the transformed value may have changed. If this happens, the listeners should
           // be notified.
-          val valueString = scope.state.valueString
-          val currentValue = ValueTransformer.stringToValueOrDefault(valueString, scope.currentProps)
+          val valueString = scope.currentState.valueString
+          val currentValue = ValueTransformer.stringToValueOrDefault(valueString, scope.prevProps)
           val newValue = {
-            val transformedValue = ValueTransformer.stringToValueOrDefault(valueString, scope.nextProps)
-            valueChangeForPropsChange(scope.nextProps, transformedValue)
+            val transformedValue = ValueTransformer.stringToValueOrDefault(valueString, scope.currentProps)
+            valueChangeForPropsChange(scope.currentProps, transformedValue)
           }
           if (currentValue != newValue) {
             scope
-              .modState(_.withValueString(ValueTransformer.valueToString(newValue, scope.nextProps)))
+              .modState(_.withValueString(ValueTransformer.valueToString(newValue, scope.currentProps)))
               .runNow()
-            for (listener <- scope.state.listeners) {
+            for (listener <- scope.currentState.listeners) {
               listener.onChange(newValue, directUserChange = false).runNow()
             }
           }
@@ -129,7 +129,7 @@ object InputComponent {
   private type ThisCtorSummoner[Value, ExtraProps] =
     CtorType.Summoner.Aux[Box[Props[Value, ExtraProps]], Children.None, CtorType.Props]
   type ThisMutableRef[Value, ExtraProps] =
-    ToScalaComponent[Props[Value, ExtraProps], State[Value], Backend, ThisCtorSummoner[Value, ExtraProps]#CT]
+    ToScalaComponent[Props[Value, ExtraProps], State[Value], Backend]
 
   trait InputRenderer[ExtraProps] {
     def renderInput(
@@ -207,7 +207,7 @@ object InputComponent {
   abstract class Reference[Value, ExtraProps](mutableRef: ThisMutableRef[Value, ExtraProps])
       extends InputBase.Reference[Value] {
     override final def apply(): InputBase.Proxy[Value] = {
-      mutableRef.get.asCallback.runNow() map (new Proxy(_)) getOrElse InputBase.Proxy.nullObject()
+      mutableRef.get.runNow() map (new Proxy(_)) getOrElse InputBase.Proxy.nullObject()
     }
   }
 

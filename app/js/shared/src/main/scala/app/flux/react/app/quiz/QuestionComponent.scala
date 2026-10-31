@@ -82,7 +82,7 @@ final class QuestionComponent(implicit
   protected class Backend($ : BackendScope[Props, State]) extends BackendBase($) {
 
     override def render(props: Props, state: State): VdomElement = logExceptions {
-      implicit val _1: Props = props
+      implicit val autoContext1: Props = props
       <.div(
         ^.className := "question-wrapper",
         props.questionProgressIndex match {
@@ -117,7 +117,7 @@ final class QuestionComponent(implicit
     )(implicit
         props: Props
     ): VdomElement = {
-      implicit val _ = props.quizState
+      implicit val autoContext2 = props.quizState
       val answerIsVisible = question.answerIsVisible(props.questionProgressIndex)
       val showSubmissionsOnChoices =
         question.isMultipleChoice && (question.onlyFirstGainsPoints || answerIsVisible)
@@ -283,7 +283,7 @@ final class QuestionComponent(implicit
     )(implicit
         props: Props
     ): VdomElement = {
-      implicit val _ = props.quizState
+      implicit val autoContext3 = props.quizState
       val progressIndex = props.questionProgressIndex
       val answerIsVisible = question.answerIsVisible(props.questionProgressIndex)
 
@@ -366,7 +366,7 @@ final class QuestionComponent(implicit
     )(implicit
         props: Props
     ): VdomElement = {
-      implicit val _ = props.quizState
+      implicit val autoContext4 = props.quizState
       val progressIndex = props.questionProgressIndex
       val answerIsVisible = question.answerIsVisible(props.questionProgressIndex)
 
