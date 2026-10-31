@@ -74,7 +74,7 @@ final class TeamsAndQuizStateStore(implicit
   // **************** Additional public API: Write methods **************** //
   def addOrGetTeam(name: String): Future[Team] = async {
     await(scalaJsApiClient.doTeamOrQuizStateUpdate(MaybeAddTeam(uniqueName = name)))
-    await(entityAccess.newQuery[Team]().data())
+    await(scalaJsApiClient.executeDataQuery(DbQuery[Team](DbQuery.Filter.NullFilter[Team](), None, None)))
       .find(t => Team.areEquivalentTeamNames(t.name, name))
       .get
   }
